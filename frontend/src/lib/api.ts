@@ -68,7 +68,7 @@ export const api = {
   campaigns: () => request<{ id: string; name: string }[]>("/campaigns"),
   statuses: () => request<{ id: string; name: string }[]>("/statuses"),
   priorities: () => request<{ id: string; name: string }[]>("/priorities"),
-  reschedule: (id: string, payload: { followUpOption: string; customDate?: string }) =>
+  reschedule: (id: string, payload: { dueAt: string; reason?: string }) =>
     request<Contact>(`/contacts/${id}/reschedule`, { method: "POST", body: JSON.stringify(payload) }),
   logCall: (
     id: string,

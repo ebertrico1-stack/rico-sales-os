@@ -1,14 +1,12 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
-import { resolveFollowUpDate, type FollowUpOption } from "../lib/followup.js";
 
 export const followUpRouter = Router();
 
 const rescheduleSchema = z.object({
-  followUpOption: z.enum(["spaeter_heute", "morgen", "in_3_tagen", "naechste_woche", "custom"]),
-  customDate: z.string().optional(),
-  reason: z.string().optional(), // z.B. "manuell verschoben"
+  dueAt: z.string(), // ISO-Datetime, vom datetime-local Input
+  reason: z.string().optional(), // freier Text, z.B. "Call Allgemein", "Termin für Vertragsgespräch"
 });
 
 // POST /api/contacts/:id/reschedule
@@ -19,14 +17,14 @@ followUpRouter.post("/:id/reschedule", async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: "Der Termin konnte nicht verschoben werden.", details: parsed.error.flatten() });
   }
-  const { followUpOption, customDate, reason } = parsed.data;
+  const { dueAt, reason } = parsed.data;
   const contactId = req.params.id;
 
   const contact = await prisma.contact.findUnique({ where: { id: contactId } });
   if (!contact) return res.status(404).json({ error: "Kontakt nicht gefunden." });
 
-  const nextDate = resolveFollowUpDate({ option: followUpOption as FollowUpOption, customDate });
-  if (!nextDate) return res.status(400).json({ error: "Ungültiges Datum." });
+  const nextDate = new Date(dueAt);
+  if (isNaN(nextDate.getTime())) return res.status(400).json({ error: "Ungültiges Datum." });
 
   try {
     const updated = await prisma.$transaction(async (tx) => {
