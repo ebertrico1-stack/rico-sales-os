@@ -131,6 +131,7 @@ const createContactSchema = z.object({
   city: z.string().optional(),
   country: z.string().optional(),
   source: z.string().optional(),
+  notes: z.string().optional(),
   campaignId: z.string(),
   statusId: z.string(),
   priorityId: z.string(),

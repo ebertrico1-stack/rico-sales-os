@@ -21,6 +21,7 @@ export function AddContactSheet({
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
+  const [notes, setNotes] = useState("");
   const [campaignId, setCampaignId] = useState("");
   const [statusId, setStatusId] = useState("");
   const [priorityId, setPriorityId] = useState("");
@@ -62,6 +63,7 @@ export function AddContactSheet({
           phone: phone.trim() || undefined,
           email: email.trim() || undefined,
           city: city.trim() || undefined,
+          notes: notes.trim() || undefined,
           campaignId, statusId, priorityId,
         }),
       });
@@ -111,6 +113,16 @@ export function AddContactSheet({
 
           <Field label="Stadt">
             <input value={city} onChange={(e) => setCity(e.target.value)} className="input" />
+          </Field>
+
+          <Field label="Notiz">
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              placeholder="z. B. woher der Kontakt kommt, erste Einschätzung …"
+              className="input"
+            />
           </Field>
 
           <Field label="Kampagne *">
