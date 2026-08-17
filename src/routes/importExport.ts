@@ -81,7 +81,17 @@ importExportRouter.post("/import/commit", async (req, res) => {
 
     try {
       await prisma.contact.create({
-        data: { ...mapped, campaignId, statusId, priorityId, source: mapped.source || "CSV-Import" },
+        data: {
+          firstName: mapped.firstName,
+          lastName: mapped.lastName,
+          company: mapped.company || undefined,
+          phone: mapped.phone || undefined,
+          email: mapped.email || undefined,
+          city: mapped.city || undefined,
+          country: mapped.country || undefined,
+          campaignId, statusId, priorityId,
+          source: mapped.source || "CSV-Import",
+        },
       });
       created++;
     } catch {
