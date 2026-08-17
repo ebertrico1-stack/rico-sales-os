@@ -24,7 +24,7 @@ export function RescheduleSheet({
     setSaving(true);
     setError(null);
     try {
-      await api.reschedule(contactId, { dueAt, reason: reason.trim() || undefined });
+      await api.reschedule(contactId, { dueAt: new Date(dueAt).toISOString(), reason: reason.trim() || undefined });
       onDone();
     } catch (e: any) {
       setError(e.message ?? "Der Termin konnte nicht verschoben werden.");

@@ -63,8 +63,8 @@ export function ResultModal({
         result,
         note: note.trim() || undefined,
         followUpOption: followUp,
-        customDate: followUp === "custom" ? customDate : undefined,
-        appointment: needsAppointment ? { scheduledAt: appointmentDate } : undefined,
+        customDate: followUp === "custom" ? new Date(customDate).toISOString() : undefined,
+        appointment: needsAppointment ? { scheduledAt: new Date(appointmentDate).toISOString() } : undefined,
       });
     } catch (e: any) {
       setError(e.message ?? "Der Kontakt konnte nicht gespeichert werden.");
