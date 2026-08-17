@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api, Contact } from "../lib/api";
 import { ContactCard } from "../components/ContactCard";
 import { RescheduleSheet } from "../components/RescheduleSheet";
+import { AddContactSheet } from "../components/AddContactSheet";
 
 const filters = [
   { key: "alle", label: "Alle" },
@@ -19,6 +20,7 @@ export function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rescheduling, setRescheduling] = useState<Contact | null>(null);
+  const [adding, setAdding] = useState(false);
   const navigate = useNavigate();
 
   function reload() {
@@ -35,7 +37,16 @@ export function ContactsPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-safe-nav pt-6">
-      <h1 className="mb-4 font-display text-2xl font-bold text-ink">Kontakte</h1>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold text-ink">Kontakte</h1>
+        <button
+          onClick={() => setAdding(true)}
+          aria-label="Neuen Kontakt anlegen"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-xl font-semibold text-white"
+        >
+          +
+        </button>
+      </div>
 
       <input
         value={search}
@@ -83,6 +94,16 @@ export function ContactsPage() {
           onClose={() => setRescheduling(null)}
           onDone={() => {
             setRescheduling(null);
+            reload();
+          }}
+        />
+      )}
+
+      {adding && (
+        <AddContactSheet
+          onClose={() => setAdding(false)}
+          onCreated={() => {
+            setAdding(false);
             reload();
           }}
         />

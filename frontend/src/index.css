@@ -24,6 +24,19 @@ input, select, textarea {
   padding-bottom: calc(6rem + env(safe-area-inset-bottom));
 }
 
+.input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #E1E4DC;
+  background-color: #F4F5F0;
+  padding: 0.5rem 0.75rem;
+  font-size: 16px;
+}
+.input:focus {
+  outline: none;
+  border-color: #2F5D50;
+}
+
 /* sichtbarer Fokusring für Tastaturbedienung */
 :focus-visible {
   outline: 2px solid #2f5d50;
