@@ -16,6 +16,7 @@ export function RescheduleSheet({
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const canSubmit = dueAt.trim().length > 0;
 
@@ -25,7 +26,8 @@ export function RescheduleSheet({
     setError(null);
     try {
       await api.reschedule(contactId, { dueAt: new Date(dueAt).toISOString(), reason: reason.trim() || undefined });
-      onDone();
+      setSuccess(true);
+      setTimeout(onDone, 700);
     } catch (e: any) {
       setError(e.message ?? "Der Termin konnte nicht verschoben werden.");
       setSaving(false);
@@ -62,13 +64,14 @@ export function RescheduleSheet({
         </div>
 
         {error && <p className="mt-3 text-sm text-overdue">{error}</p>}
+        {success && <p className="mt-3 text-sm text-later">✓ Gespeichert</p>}
 
         <button
           disabled={!canSubmit || saving}
           onClick={handleSubmit}
           className="mt-5 w-full rounded-xl bg-brand py-4 font-display text-base font-semibold text-white disabled:opacity-40"
         >
-          {saving ? "Speichern …" : "Speichern"}
+          {success ? "✓ Gespeichert" : saving ? "Speichern …" : "Speichern"}
         </button>
       </div>
     </div>

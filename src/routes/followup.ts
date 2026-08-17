@@ -27,9 +27,14 @@ followUpRouter.post("/:id/reschedule", async (req, res) => {
   if (isNaN(nextDate.getTime())) return res.status(400).json({ error: "Ungültiges Datum." });
 
   try {
+    const formattedDate = nextDate.toLocaleString("de-DE", {
+      day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+    });
+    const note = reason ? `${reason} — verschoben auf ${formattedDate} Uhr` : `Verschoben auf ${formattedDate} Uhr`;
+
     const updated = await prisma.$transaction(async (tx) => {
       await tx.activity.create({
-        data: { contactId, type: "Follow-up verschoben", note: reason ?? undefined },
+        data: { contactId, type: "Follow-up verschoben", note },
       });
       await tx.followUp.updateMany({
         where: { contactId, isDone: false },
