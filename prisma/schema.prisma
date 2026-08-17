@@ -1,0 +1,131 @@
+// Rico Sales OS — Datenmodell (Phase 2)
+// SQLite für MVP, spätere Migration auf Postgres möglich
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Lookups (bewusst als Tabellen, nicht als Enum → erweiterbar ohne Migration) ----------
+
+model Campaign {
+  id        String    @id @default(cuid())
+  name      String    @unique // z.B. "Swiss Family Group", "Tech Markets"
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  contacts  Contact[]
+}
+
+model Status {
+  id       String    @id @default(cuid())
+  name     String    @unique // Neu, Zu kontaktieren, Nicht erreicht, Rückruf, ...
+  sortOrder Int      @default(0)
+  contacts Contact[]
+}
+
+model Priority {
+  id       String    @id @default(cuid())
+  name     String    @unique // Niedrig, Normal, Hoch, Sehr hoch
+  weight   Int       @default(0) // für Sortierung
+  contacts Contact[]
+}
+
+// ---------- Kernentität ----------
+
+model Contact {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  company     String?
+  phone       String?
+  email       String?
+  city        String?
+  country     String?
+  source      String?  // Quelle (Import, manuell, etc.)
+  notes       String?  // freies Notizfeld, aktuellster Stand
+
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id])
+
+  statusId    String
+  status      Status   @relation(fields: [statusId], references: [id])
+
+  priorityId  String
+  priority    Priority @relation(fields: [priorityId], references: [id])
+
+  lastContactAt DateTime? // letzter Kontakt
+
+  // "aktiver" nächster Termin — das treibt die Heute-Liste
+  nextActionAt   DateTime?
+  nextActionType String?   // z.B. "Anruf", "Rückruf"
+  nextActionNote String?
+
+  isCompleted Boolean  @default(false) // aus offenen Follow-ups raus (Szenario 6)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  activities   Activity[]
+  followUps    FollowUp[]
+  appointments Appointment[]
+
+  @@index([nextActionAt])
+  @@index([phone])
+  @@index([email])
+}
+
+// ---------- Historie (append-only Log jeder Aktion) ----------
+
+model Activity {
+  id        String   @id @default(cuid())
+  contactId String
+  contact   Contact  @relation(fields: [contactId], references: [id])
+
+  type      String   // "Anruf", "Notiz", "Follow-up gesetzt", "Status geändert" ...
+  result    String?  // Interesse, Kein Interesse, Rückruf, Termin vereinbart, nicht erreicht, ...
+  note      String?
+
+  createdAt DateTime @default(now())
+
+  @@index([contactId, createdAt])
+}
+
+// ---------- Follow-up-Queue (Verlauf der geplanten Termine, nicht nur der aktive) ----------
+
+model FollowUp {
+  id         String    @id @default(cuid())
+  contactId  String
+  contact    Contact   @relation(fields: [contactId], references: [id])
+
+  dueAt      DateTime  // Datum + optionale Uhrzeit
+  reason     String?   // z.B. "Rückruf", "später entscheiden"
+  isDone     Boolean   @default(false) // wird true, sobald durch neue Aktion ersetzt/erledigt
+
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([contactId, isDone])
+  @@index([dueAt])
+}
+
+// ---------- Echte Termine (separat vom Follow-up-System, Punkt 14) ----------
+
+model Appointment {
+  id        String   @id @default(cuid())
+  contactId String
+  contact   Contact  @relation(fields: [contactId], references: [id])
+
+  scheduledAt DateTime
+  location    String?
+  note        String?
+  status      String   @default("geplant") // geplant, verschoben, stattgefunden, abgesagt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([scheduledAt])
+}

@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  /* verhindert Overscroll-Bounce, der die fixierte Bottom-Nav "abreißt" */
+  overscroll-behavior-y: none;
+}
+
+/* iOS zoomt bei Fokus automatisch in Inputs mit < 16px Schrift hinein — verhindern */
+input, select, textarea {
+  font-size: 16px;
+}
+
+/* Safe-Area für iPhones mit Home-Indicator/Notch */
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+.pb-safe-nav {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}
+
+/* sichtbarer Fokusring für Tastaturbedienung */
+:focus-visible {
+  outline: 2px solid #2f5d50;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

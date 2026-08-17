@@ -1,0 +1,75 @@
+export interface Contact {
+  id: string;
+  firstName: string;
+  lastName: string;
+  company?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  city?: string | null;
+  notes?: string | null;
+  lastContactAt?: string | null;
+  nextActionAt?: string | null;
+  nextActionType?: string | null;
+  isCompleted: boolean;
+  campaign: { id: string; name: string };
+  status: { id: string; name: string };
+  priority: { id: string; name: string; weight: number };
+}
+
+export interface DashboardStats {
+  totalContacts: number;
+  newContacts: number;
+  callsToday: number;
+  reachedToday: number;
+  notReachedToday: number;
+  callbacksOpen: number;
+  appointmentsUpcoming: number;
+  completedContacts: number;
+  conversionRate: number;
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`/api${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...init,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? "Etwas ist schiefgelaufen. Bitte versuche es erneut.");
+  }
+  return res.json();
+}
+
+export const api = {
+  today: () => request<Contact[]>("/contacts/today"),
+  nextForCall: (excludeId?: string) =>
+    request<Contact | null>(`/contacts/next-for-call${excludeId ? `?exclude=${excludeId}` : ""}`),
+  list: (params: Record<string, string>) =>
+    request<Contact[]>(`/contacts?${new URLSearchParams(params).toString()}`),
+  dashboard: () => request<DashboardStats>("/dashboard"),
+  previewImport: (csv: string) =>
+    request<{ columns: string[]; sampleRows: Record<string, string>[]; totalRows: number; targetFields: string[] }>(
+      "/import/preview",
+      { method: "POST", body: JSON.stringify({ csv }) }
+    ),
+  commitImport: (payload: {
+    csv: string;
+    campaignId: string;
+    statusId: string;
+    priorityId: string;
+    mapping: Record<string, string>;
+  }) =>
+    request<{ created: number; skippedDuplicates: unknown[]; failed: unknown[]; totalRows: number }>(
+      "/import/commit",
+      { method: "POST", body: JSON.stringify(payload) }
+    ),
+  campaigns: () => request<{ id: string; name: string }[]>("/campaigns"),
+  statuses: () => request<{ id: string; name: string }[]>("/statuses"),
+  priorities: () => request<{ id: string; name: string }[]>("/priorities"),
+  reschedule: (id: string, payload: { followUpOption: string; customDate?: string }) =>
+    request<Contact>(`/contacts/${id}/reschedule`, { method: "POST", body: JSON.stringify(payload) }),
+  logCall: (
+    id: string,
+    payload: { result: string; note?: string; followUpOption: string; customDate?: string }
+  ) => request<Contact>(`/contacts/${id}/log-call`, { method: "POST", body: JSON.stringify(payload) }),
+};
