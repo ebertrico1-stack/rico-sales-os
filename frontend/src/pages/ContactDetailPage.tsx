@@ -45,17 +45,25 @@ export function ContactDetailPage() {
 
       <h2 className="mb-2 mt-6 font-display text-lg font-semibold text-ink">Verlauf</h2>
       <div className="space-y-2">
-        {contact.activities.map((a) => (
-          <div key={a.id} className="rounded-xl border border-border bg-surface p-3">
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-ink">{a.type}{a.result ? ` — ${a.result}` : ""}</span>
-              <span className="font-mono text-xs text-muted">
-                {new Date(a.createdAt).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-              </span>
+        {contact.activities.map((a) => {
+          const isReschedule = a.type === "Follow-up verschoben";
+          return (
+            <div key={a.id} className="rounded-xl border border-border bg-surface p-3">
+              <div className="flex items-center justify-between">
+                {!isReschedule && (
+                  <span className="font-medium text-ink">{a.type}{a.result ? ` — ${a.result}` : ""}</span>
+                )}
+                {isReschedule && a.note && (
+                  <span className="font-medium text-ink">{a.note}</span>
+                )}
+                <span className="font-mono text-xs text-muted">
+                  {new Date(a.createdAt).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+              {!isReschedule && a.note && <p className="mt-1 text-sm text-muted">{a.note}</p>}
             </div>
-            {a.note && <p className="mt-1 text-sm text-muted">{a.note}</p>}
-          </div>
-        ))}
+          );
+        })}
         {contact.activities.length === 0 && (
           <p className="text-sm text-muted">Noch keine Aktivitäten erfasst.</p>
         )}
