@@ -156,6 +156,16 @@ contactsRouter.post("/", async (req, res) => {
   res.status(201).json(contact);
 });
 
+// ---------- Aktivität löschen ----------
+contactsRouter.delete("/:contactId/activities/:activityId", async (req, res) => {
+  try {
+    await prisma.activity.delete({ where: { id: req.params.activityId } });
+    res.status(204).end();
+  } catch {
+    res.status(404).json({ error: "Eintrag konnte nicht gelöscht werden." });
+  }
+});
+
 // ---------- Kontakt aktualisieren ----------
 contactsRouter.patch("/:id", async (req, res) => {
   try {

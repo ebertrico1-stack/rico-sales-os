@@ -39,6 +39,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ?? "Etwas ist schiefgelaufen. Bitte versuche es erneut.");
   }
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 
@@ -70,6 +71,8 @@ export const api = {
   priorities: () => request<{ id: string; name: string }[]>("/priorities"),
   reschedule: (id: string, payload: { dueAt: string; reason?: string }) =>
     request<Contact>(`/contacts/${id}/reschedule`, { method: "POST", body: JSON.stringify(payload) }),
+  deleteActivity: (contactId: string, activityId: string) =>
+    request<void>(`/contacts/${contactId}/activities/${activityId}`, { method: "DELETE" }),
   logCall: (
     id: string,
     payload: { result: string; note?: string; followUpOption: string; customDate?: string }

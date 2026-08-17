@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { api } from "../lib/api";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 interface Detail {
+  id: string;
   firstName: string; lastName: string; company?: string; phone?: string; email?: string;
   city?: string; notes?: string; campaign: { name: string } | null; status: { name: string }; priority: { name: string };
   activities: { id: string; type: string; result?: string; note?: string; createdAt: string }[];
@@ -13,13 +15,49 @@ export function ContactDetailPage() {
   const { id } = useParams();
   const [contact, setContact] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [newNote, setNewNote] = useState("");
+  const [addingNote, setAddingNote] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
+  function reload() {
     fetch(`${API_BASE}/api/contacts/${id}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Kontakt nicht gefunden."))))
       .then(setContact)
       .catch((e) => setError(e.message));
-  }, [id]);
+  }
+
+  useEffect(reload, [id]);
+
+  async function handleAddNote() {
+    if (!newNote.trim() || !contact) return;
+    setAddingNote(true);
+    const timestamp = new Date().toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const combined = contact.notes
+      ? `${contact.notes}\n[${timestamp}] ${newNote.trim()}`
+      : `[${timestamp}] ${newNote.trim()}`;
+    try {
+      await fetch(`${API_BASE}/api/contacts/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: combined }),
+      });
+      setNewNote("");
+      reload();
+    } finally {
+      setAddingNote(false);
+    }
+  }
+
+  async function handleDeleteActivity(activityId: string) {
+    if (!contact) return;
+    setDeletingId(activityId);
+    try {
+      await api.deleteActivity(contact.id, activityId);
+      reload();
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   if (error) return <p className="p-4 text-sm text-overdue">{error}</p>;
   if (!contact) return <p className="p-4 text-sm text-muted">Lade …</p>;
@@ -36,12 +74,25 @@ export function ContactDetailPage() {
         {contact.city && <p>{contact.city}</p>}
       </div>
 
-      {contact.notes && (
-        <div className="mt-4 rounded-xl border border-border bg-surface p-4">
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">Notiz</p>
-          <p className="text-sm text-ink">{contact.notes}</p>
+      <div className="mt-4 rounded-xl border border-border bg-surface p-4">
+        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">Notiz</p>
+        {contact.notes && <p className="mb-3 whitespace-pre-line text-sm text-ink">{contact.notes}</p>}
+        <div className="flex gap-2">
+          <input
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            placeholder="Notiz hinzufügen …"
+            className="input flex-1"
+          />
+          <button
+            onClick={handleAddNote}
+            disabled={!newNote.trim() || addingNote}
+            className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            {addingNote ? "…" : "Hinzufügen"}
+          </button>
         </div>
-      )}
+      </div>
 
       <h2 className="mb-2 mt-6 font-display text-lg font-semibold text-ink">Verlauf</h2>
       <div className="space-y-2">
@@ -49,18 +100,30 @@ export function ContactDetailPage() {
           const isReschedule = a.type === "Follow-up verschoben";
           return (
             <div key={a.id} className="rounded-xl border border-border bg-surface p-3">
-              <div className="flex items-center justify-between">
-                {!isReschedule && (
-                  <span className="font-medium text-ink">{a.type}{a.result ? ` — ${a.result}` : ""}</span>
-                )}
-                {isReschedule && a.note && (
-                  <span className="font-medium text-ink">{a.note}</span>
-                )}
-                <span className="font-mono text-xs text-muted">
-                  {new Date(a.createdAt).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                </span>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  {!isReschedule && (
+                    <span className="font-medium text-ink">{a.type}{a.result ? ` — ${a.result}` : ""}</span>
+                  )}
+                  {isReschedule && a.note && (
+                    <span className="font-medium text-ink">{a.note}</span>
+                  )}
+                  {!isReschedule && a.note && <p className="mt-1 text-sm text-muted">{a.note}</p>}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="font-mono text-xs text-muted">
+                    {new Date(a.createdAt).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <button
+                    onClick={() => handleDeleteActivity(a.id)}
+                    disabled={deletingId === a.id}
+                    aria-label="Eintrag löschen"
+                    className="text-lg leading-none text-overdue disabled:opacity-40"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
-              {!isReschedule && a.note && <p className="mt-1 text-sm text-muted">{a.note}</p>}
             </div>
           );
         })}
