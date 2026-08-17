@@ -11,7 +11,7 @@ export interface Contact {
   nextActionAt?: string | null;
   nextActionType?: string | null;
   isCompleted: boolean;
-  campaign: { id: string; name: string };
+  campaign: { id: string; name: string } | null;
   status: { id: string; name: string };
   priority: { id: string; name: string; weight: number };
 }

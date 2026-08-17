@@ -117,7 +117,7 @@ importExportRouter.get("/export", async (req, res) => {
     "E-Mail": c.email ?? "",
     Stadt: c.city ?? "",
     Land: c.country ?? "",
-    Kampagne: c.campaign.name,
+    Kampagne: c.campaign?.name ?? "",
     Status: c.status.name,
     Priorität: c.priority.name,
     "Letzter Kontakt": c.lastContactAt?.toISOString() ?? "",

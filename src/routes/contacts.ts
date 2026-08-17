@@ -132,7 +132,7 @@ const createContactSchema = z.object({
   country: z.string().optional(),
   source: z.string().optional(),
   notes: z.string().optional(),
-  campaignId: z.string(),
+  campaignId: z.string().optional(),
   statusId: z.string(),
   priorityId: z.string(),
 });

@@ -95,7 +95,7 @@ export function CallModePage() {
   return (
     <div className="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-6 pt-6 safe-bottom">
       <div className="mb-4 flex items-center justify-between">
-        <span className="font-mono text-xs text-muted">{sessionDone} erledigt · {contact.campaign.name}</span>
+        <span className="font-mono text-xs text-muted">{sessionDone} erledigt · {contact.campaign?.name ?? "Keine Kampagne"}</span>
         <button onClick={() => setPaused(true)} className="font-mono text-xs text-muted underline">
           Pause
         </button>

@@ -48,8 +48,8 @@ model Contact {
   source      String?  // Quelle (Import, manuell, etc.)
   notes       String?  // freies Notizfeld, aktuellster Stand
 
-  campaignId  String
-  campaign    Campaign @relation(fields: [campaignId], references: [id])
+  campaignId  String?
+  campaign    Campaign? @relation(fields: [campaignId], references: [id])
 
   statusId    String
   status      Status   @relation(fields: [statusId], references: [id])

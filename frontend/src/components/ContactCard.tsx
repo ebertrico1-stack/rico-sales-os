@@ -50,7 +50,7 @@ export function ContactCard({
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted">
-          <span>{contact.campaign.name}</span>
+          <span>{contact.campaign?.name ?? "Keine Kampagne"}</span>
           {contact.company && <span>· {contact.company}</span>}
         </div>
         <div className="flex items-center gap-3 font-mono text-xs text-muted">

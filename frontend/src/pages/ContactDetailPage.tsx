@@ -5,7 +5,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 interface Detail {
   firstName: string; lastName: string; company?: string; phone?: string; email?: string;
-  city?: string; notes?: string; campaign: { name: string }; status: { name: string }; priority: { name: string };
+  city?: string; notes?: string; campaign: { name: string } | null; status: { name: string }; priority: { name: string };
   activities: { id: string; type: string; result?: string; note?: string; createdAt: string }[];
 }
 
@@ -27,7 +27,7 @@ export function ContactDetailPage() {
   return (
     <div className="mx-auto max-w-lg px-4 pb-safe-nav pt-6">
       <h1 className="font-display text-2xl font-bold text-ink">{contact.firstName} {contact.lastName}</h1>
-      <p className="mt-1 text-sm text-muted">{contact.campaign.name} · {contact.status.name} · {contact.priority.name}</p>
+      <p className="mt-1 text-sm text-muted">{contact.campaign?.name ?? "Keine Kampagne"} · {contact.status.name} · {contact.priority.name}</p>
 
       <div className="mt-4 space-y-1 rounded-xl border border-border bg-surface p-4 font-mono text-sm">
         {contact.company && <p>{contact.company}</p>}

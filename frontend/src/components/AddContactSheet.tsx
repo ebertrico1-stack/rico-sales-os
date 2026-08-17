@@ -46,7 +46,7 @@ export function AddContactSheet({
     });
   }, []);
 
-  const canSubmit = firstName.trim() && lastName.trim() && campaignId && statusId && priorityId;
+  const canSubmit = firstName.trim() && lastName.trim() && statusId && priorityId;
 
   async function handleSubmit() {
     if (!canSubmit) return;
@@ -64,7 +64,8 @@ export function AddContactSheet({
           email: email.trim() || undefined,
           city: city.trim() || undefined,
           notes: notes.trim() || undefined,
-          campaignId, statusId, priorityId,
+          campaignId: campaignId || undefined,
+          statusId, priorityId,
         }),
       });
       if (!res.ok) {
@@ -125,8 +126,9 @@ export function AddContactSheet({
             />
           </Field>
 
-          <Field label="Kampagne *">
+          <Field label="Kampagne">
             <select value={campaignId} onChange={(e) => setCampaignId(e.target.value)} className="input">
+              <option value="">Keine</option>
               {campaigns.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </Field>
