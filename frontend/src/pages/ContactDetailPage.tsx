@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
+
 interface Detail {
   firstName: string; lastName: string; company?: string; phone?: string; email?: string;
   city?: string; notes?: string; campaign: { name: string }; status: { name: string }; priority: { name: string };
@@ -13,7 +15,7 @@ export function ContactDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/contacts/${id}`)
+    fetch(`${API_BASE}/api/contacts/${id}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Kontakt nicht gefunden."))))
       .then(setContact)
       .catch((e) => setError(e.message));

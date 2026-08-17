@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
+
 const fieldLabels: Record<string, string> = {
   firstName: "Vorname",
   lastName: "Nachname",
@@ -87,7 +89,7 @@ export function ImportExportPage() {
         <p className="mb-2 font-display text-base font-semibold text-ink">Export</p>
         <p className="mb-3 text-sm text-muted">Alle Kontakte als CSV herunterladen.</p>
         <a
-          href="/api/export"
+          href={`${API_BASE}/api/export`}
           className="inline-block rounded-xl border border-border bg-base px-4 py-2 text-sm font-medium text-ink"
         >
           CSV exportieren
