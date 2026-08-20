@@ -30,11 +30,21 @@ export interface DashboardStats {
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}/api${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...init,
-  });
+async function request<T>(path: string, init?: RequestInit, retriesLeft = 6): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api${path}`, {
+      headers: { "Content-Type": "application/json" },
+      ...init,
+    });
+  } catch (networkErr) {
+    // Server schläft (Render Free Tier) oder ist kurz nicht erreichbar → mit Backoff erneut versuchen
+    if (retriesLeft > 0) {
+      await new Promise((r) => setTimeout(r, 4000));
+      return request<T>(path, init, retriesLeft - 1);
+    }
+    throw new Error("Der Server ist gerade nicht erreichbar. Bitte versuche es in einer Minute erneut.");
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ?? "Etwas ist schiefgelaufen. Bitte versuche es erneut.");

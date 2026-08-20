@@ -62,7 +62,7 @@ export function TodayPage() {
       )}
 
       {!contacts && !error && (
-        <p className="text-sm text-muted">Lade Kontakte …</p>
+        <p className="text-sm text-muted">Lade Kontakte … (kann beim ersten Öffnen bis zu 1 Minute dauern)</p>
       )}
 
       {contacts && contacts.length === 0 && (
