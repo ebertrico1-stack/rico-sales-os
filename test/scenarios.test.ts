@@ -63,20 +63,21 @@ test("Szenario 1: fälliger Kontakt erscheint in /contacts/today", async () => {
 // ---------- Szenario 2: Kontakt wird auf morgen verschoben → verschwindet aus "Heute" ----------
 test("Szenario 2: verschobener Kontakt verschwindet aus Heute, erscheint morgen", async () => {
   const contact = await createContact({ nextActionAt: new Date() });
-  await request(app).post(`/api/contacts/${contact.id}/reschedule`).send({ followUpOption: "morgen" });
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  await request(app).post(`/api/contacts/${contact.id}/reschedule`).send({ dueAt: tomorrow.toISOString() });
 
   const today = await request(app).get("/api/contacts/today");
   assert.equal(today.body.length, 0);
 
   const updated = await prisma.contact.findUnique({ where: { id: contact.id } });
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   assert.equal(updated?.nextActionAt?.toDateString(), tomorrow.toDateString());
 });
 
 // ---------- Szenario 3: Kontakt wird auf +7 Tage verschoben → erscheint erst dann ----------
 test("Szenario 3: Kontakt mit Termin in einer Woche taucht nicht in Heute auf", async () => {
   const contact = await createContact({ nextActionAt: new Date() });
-  await request(app).post(`/api/contacts/${contact.id}/reschedule`).send({ followUpOption: "naechste_woche" });
+  const nextWeek = new Date(Date.now() + 7 * 86400000);
+  await request(app).post(`/api/contacts/${contact.id}/reschedule`).send({ dueAt: nextWeek.toISOString() });
 
   const today = await request(app).get("/api/contacts/today");
   assert.equal(today.body.length, 0);
@@ -85,9 +86,10 @@ test("Szenario 3: Kontakt mit Termin in einer Woche taucht nicht in Heute auf", 
 // ---------- Szenario 4: Kontakt nicht erreicht → Activity wird gespeichert ----------
 test("Szenario 4: nicht erreicht wird als Activity geloggt", async () => {
   const contact = await createContact();
+  const tomorrow = new Date(Date.now() + 86400000);
   await request(app)
     .post(`/api/contacts/${contact.id}/log-call`)
-    .send({ result: "nicht_erreicht", followUpOption: "morgen" });
+    .send({ result: "nicht_erreicht", dueAt: tomorrow.toISOString() });
 
   const activities = await prisma.activity.findMany({ where: { contactId: contact.id } });
   assert.equal(activities.length, 1);
@@ -100,7 +102,6 @@ test("Szenario 5: Termin vereinbart legt Appointment an", async () => {
   const scheduledAt = new Date(Date.now() + 3 * 86400000).toISOString();
   await request(app).post(`/api/contacts/${contact.id}/log-call`).send({
     result: "termin_vereinbart",
-    followUpOption: "keine_weitere_aktion",
     appointment: { scheduledAt },
   });
 
@@ -113,7 +114,7 @@ test("Szenario 6: keine_weitere_aktion schließt Kontakt ab", async () => {
   const contact = await createContact();
   await request(app)
     .post(`/api/contacts/${contact.id}/log-call`)
-    .send({ result: "kein_interesse", followUpOption: "keine_weitere_aktion" });
+    .send({ result: "kein_interesse" });
 
   const updated = await prisma.contact.findUnique({ where: { id: contact.id } });
   assert.equal(updated?.isCompleted, true);

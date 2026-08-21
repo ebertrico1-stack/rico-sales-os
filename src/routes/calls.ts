@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
-import { resolveFollowUpDate, type FollowUpOption } from "../lib/followup.js";
 
 export const callsRouter = Router();
 
@@ -17,15 +16,7 @@ const logCallSchema = z.object({
     "sonstiges",
   ]),
   note: z.string().optional(),
-  followUpOption: z.enum([
-    "spaeter_heute",
-    "morgen",
-    "in_3_tagen",
-    "naechste_woche",
-    "custom",
-    "keine_weitere_aktion",
-  ]),
-  customDate: z.string().optional(),
+  dueAt: z.string().optional(), // ISO-Datetime des nächsten Follow-ups; leer = keine weitere Aktion
   appointment: z
     .object({ scheduledAt: z.string(), location: z.string().optional() })
     .optional(),
@@ -37,13 +28,14 @@ callsRouter.post("/:id/log-call", async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: "Das Ergebnis konnte nicht gespeichert werden.", details: parsed.error.flatten() });
   }
-  const { result, note, followUpOption, customDate, appointment } = parsed.data;
+  const { result, note, dueAt, appointment } = parsed.data;
   const contactId = req.params.id;
 
   const contact = await prisma.contact.findUnique({ where: { id: contactId } });
   if (!contact) return res.status(404).json({ error: "Kontakt nicht gefunden." });
 
-  const nextDate = resolveFollowUpDate({ option: followUpOption as FollowUpOption, customDate });
+  const nextDate = dueAt ? new Date(dueAt) : null;
+  if (nextDate && isNaN(nextDate.getTime())) return res.status(400).json({ error: "Ungültiges Datum." });
 
   try {
     const updated = await prisma.$transaction(async (tx) => {
@@ -61,7 +53,7 @@ callsRouter.post("/:id/log-call", async (req, res) => {
       // 3) Neues FollowUp anlegen, falls ein weiterer Termin nötig ist
       if (nextDate) {
         await tx.followUp.create({
-          data: { contactId, dueAt: nextDate, reason: result },
+          data: { contactId, dueAt: nextDate, reason: note || result },
         });
       }
 

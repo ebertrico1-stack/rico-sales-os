@@ -11,9 +11,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "seed": "tsx prisma/seed.ts",
-    "test": "tsx --test test/followup.test.ts",
     "test:integration": "tsx --test test/scenarios.test.ts",
-    "test:all": "npm run test && npm run test:integration"
+    "test:all": "npm run test:integration"
   },
   "dependencies": {
     "@prisma/client": "^5.18.0",

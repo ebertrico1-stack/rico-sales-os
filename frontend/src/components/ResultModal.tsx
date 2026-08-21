@@ -11,20 +11,10 @@ const resultOptions = [
   { key: "sonstiges", label: "Sonstiges" },
 ];
 
-const followUpOptions = [
-  { key: "spaeter_heute", label: "Später heute" },
-  { key: "morgen", label: "Morgen" },
-  { key: "in_3_tagen", label: "In 3 Tagen" },
-  { key: "naechste_woche", label: "Nächste Woche" },
-  { key: "custom", label: "Eigenes Datum" },
-  { key: "keine_weitere_aktion", label: "Keine weitere Aktion" },
-];
-
 export interface CallLogPayload {
   result: string;
   note?: string;
-  followUpOption: string;
-  customDate?: string;
+  dueAt?: string;
   appointment?: { scheduledAt: string; location?: string };
 }
 
@@ -41,18 +31,13 @@ export function ResultModal({
 }) {
   const [result, setResult] = useState<string | undefined>(presetResult);
   const [note, setNote] = useState("");
-  const [followUp, setFollowUp] = useState<string>(
-    presetResult === "kein_interesse" || presetResult === "falscher_ansprechpartner"
-      ? "keine_weitere_aktion"
-      : ""
-  );
-  const [customDate, setCustomDate] = useState("");
+  const [dueAt, setDueAt] = useState("");
   const [appointmentDate, setAppointmentDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const needsAppointment = result === "termin_vereinbart";
-  const canSubmit = result && followUp && (followUp !== "custom" || customDate) && (!needsAppointment || appointmentDate);
+  const canSubmit = result && (!needsAppointment || appointmentDate);
 
   async function handleSubmit() {
     if (!canSubmit || !result) return;
@@ -62,8 +47,7 @@ export function ResultModal({
       await onSubmit({
         result,
         note: note.trim() || undefined,
-        followUpOption: followUp,
-        customDate: followUp === "custom" ? new Date(customDate).toISOString() : undefined,
+        dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
         appointment: needsAppointment ? { scheduledAt: new Date(appointmentDate).toISOString() } : undefined,
       });
     } catch (e: any) {
@@ -108,16 +92,13 @@ export function ResultModal({
           </Section>
         )}
 
-        <Section title="Nächste Aktion">
-          <ChipGroup options={followUpOptions} value={followUp} onChange={setFollowUp} />
-          {followUp === "custom" && (
-            <input
-              type="datetime-local"
-              value={customDate}
-              onChange={(e) => setCustomDate(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-border bg-base px-3 py-2 text-sm outline-none focus:border-brand"
-            />
-          )}
+        <Section title="Nächster Termin (leer lassen = keine weitere Aktion)">
+          <input
+            type="datetime-local"
+            value={dueAt}
+            onChange={(e) => setDueAt(e.target.value)}
+            className="w-full rounded-xl border border-border bg-base px-3 py-2 text-sm outline-none focus:border-brand"
+          />
         </Section>
 
         {error && <p className="mb-3 text-sm text-overdue">{error}</p>}

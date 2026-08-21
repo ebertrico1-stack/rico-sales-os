@@ -6,6 +6,7 @@ import { followUpRouter } from "./routes/followup.js";
 import { campaignsRouter, statusesRouter, prioritiesRouter } from "./routes/lookups.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { importExportRouter } from "./routes/importExport.js";
+import { appointmentsRouter } from "./routes/appointments.js";
 
 export const app = express();
 app.use(cors());
@@ -19,6 +20,7 @@ app.use("/api/statuses", statusesRouter);
 app.use("/api/priorities", prioritiesRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api", importExportRouter); // /api/import/preview, /api/import/commit, /api/export
+app.use("/api/appointments", appointmentsRouter);
 
 // Verständliche Fehlermeldungen statt technischer Stacktraces (Punkt 30)
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

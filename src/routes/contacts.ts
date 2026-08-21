@@ -177,6 +177,22 @@ contactsRouter.delete("/:contactId/activities/:activityId", async (req, res) => 
   }
 });
 
+// ---------- Kontakt endgültig löschen ----------
+contactsRouter.delete("/:id", async (req, res) => {
+  const contactId = req.params.id;
+  try {
+    await prisma.$transaction([
+      prisma.activity.deleteMany({ where: { contactId } }),
+      prisma.followUp.deleteMany({ where: { contactId } }),
+      prisma.appointment.deleteMany({ where: { contactId } }),
+      prisma.contact.delete({ where: { id: contactId } }),
+    ]);
+    res.status(204).end();
+  } catch {
+    res.status(404).json({ error: "Der Kontakt konnte nicht gelöscht werden." });
+  }
+});
+
 // ---------- Kontakt aktualisieren ----------
 contactsRouter.patch("/:id", async (req, res) => {
   try {

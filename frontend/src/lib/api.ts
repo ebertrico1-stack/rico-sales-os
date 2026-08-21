@@ -62,6 +62,10 @@ export const api = {
   list: (params: Record<string, string>) =>
     request<Contact[]>(`/contacts?${new URLSearchParams(params).toString()}`),
   dashboard: () => request<DashboardStats>("/dashboard"),
+  upcomingAppointments: () =>
+    request<{ id: string; scheduledAt: string; location?: string; contact: { firstName: string; lastName: string; phone?: string; company?: string } }[]>(
+      "/appointments/upcoming"
+    ),
   previewImport: (csv: string) =>
     request<{ columns: string[]; sampleRows: Record<string, string>[]; totalRows: number; targetFields: string[] }>(
       "/import/preview",
@@ -84,10 +88,11 @@ export const api = {
   complete: (id: string) => request<Contact>(`/contacts/${id}/complete`, { method: "POST" }),
   reschedule: (id: string, payload: { dueAt: string; reason?: string }) =>
     request<Contact>(`/contacts/${id}/reschedule`, { method: "POST", body: JSON.stringify(payload) }),
+  deleteContact: (id: string) => request<void>(`/contacts/${id}`, { method: "DELETE" }),
   deleteActivity: (contactId: string, activityId: string) =>
     request<void>(`/contacts/${contactId}/activities/${activityId}`, { method: "DELETE" }),
   logCall: (
     id: string,
-    payload: { result: string; note?: string; followUpOption: string; customDate?: string }
+    payload: { result: string; note?: string; dueAt?: string; appointment?: { scheduledAt: string; location?: string } }
   ) => request<Contact>(`/contacts/${id}/log-call`, { method: "POST", body: JSON.stringify(payload) }),
 };

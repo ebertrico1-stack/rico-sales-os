@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, DashboardStats } from "../lib/api";
 
 const cards: { key: keyof DashboardStats; label: string; color?: string }[] = [
@@ -11,12 +11,22 @@ const cards: { key: keyof DashboardStats; label: string; color?: string }[] = [
   { key: "conversionRate", label: "Conversion", suffix: "%" } as any,
 ];
 
+interface Appointment {
+  id: string;
+  scheduledAt: string;
+  location?: string;
+  contact: { firstName: string; lastName: string; phone?: string; company?: string; id?: string };
+}
+
 export function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     api.dashboard().then(setStats).catch((e) => setError(e.message));
+    api.upcomingAppointments().then(setAppointments).catch(() => {});
   }, []);
 
   if (error) return <p className="p-4 text-sm text-overdue">{error}</p>;
@@ -42,6 +52,29 @@ export function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {appointments.length > 0 && (
+        <div className="mb-6 rounded-xl border border-border bg-surface p-4">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">Nächste Termine</p>
+          <div className="space-y-2">
+            {appointments.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => a.contact.id && navigate(`/kontakte/${a.contact.id}`)}
+                className="flex w-full items-center justify-between gap-2 rounded-lg bg-base px-3 py-2 text-left"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-ink">{a.contact.firstName} {a.contact.lastName}</p>
+                  <p className="text-xs text-muted">{a.contact.company ?? a.contact.phone ?? ""}</p>
+                </div>
+                <span className="shrink-0 font-mono text-xs text-muted">
+                  {new Date(a.scheduledAt).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="rounded-xl border border-border bg-surface p-4">
         <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted">Gesamt</p>

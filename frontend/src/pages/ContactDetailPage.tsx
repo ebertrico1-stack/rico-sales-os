@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import { RescheduleSheet } from "../components/RescheduleSheet";
 
@@ -15,6 +15,7 @@ interface Detail {
 
 export function ContactDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [contact, setContact] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newNote, setNewNote] = useState("");
@@ -25,6 +26,7 @@ export function ContactDetailPage() {
   const [savingBirthday, setSavingBirthday] = useState(false);
   const [birthdayError, setBirthdayError] = useState<string | null>(null);
   const [reactivating, setReactivating] = useState(false);
+  const [deletingContact, setDeletingContact] = useState(false);
 
   function reload() {
     fetch(`${API_BASE}/api/contacts/${id}`)
@@ -63,6 +65,7 @@ export function ContactDetailPage() {
 
   async function handleDeleteActivity(activityId: string) {
     if (!contact) return;
+    if (!window.confirm("Diesen Verlaufseintrag wirklich löschen?")) return;
     setDeletingId(activityId);
     try {
       await api.deleteActivity(contact.id, activityId);
@@ -91,6 +94,20 @@ export function ContactDetailPage() {
       setBirthdayError(e.message ?? "Der Geburtstag konnte nicht gespeichert werden.");
     } finally {
       setSavingBirthday(false);
+    }
+  }
+
+  async function handleDeleteContact() {
+    if (!contact) return;
+    const fullName = `${contact.firstName} ${contact.lastName}`;
+    if (!window.confirm(`${fullName} inkl. gesamtem Verlauf endgültig löschen? Das kann nicht rückgängig gemacht werden.`)) return;
+    setDeletingContact(true);
+    try {
+      await api.deleteContact(contact.id);
+      navigate("/kontakte");
+    } catch (e: any) {
+      setError(e.message ?? "Der Kontakt konnte nicht gelöscht werden.");
+      setDeletingContact(false);
     }
   }
 
@@ -226,6 +243,14 @@ export function ContactDetailPage() {
           }}
         />
       )}
+
+      <button
+        onClick={handleDeleteContact}
+        disabled={deletingContact}
+        className="mt-8 w-full rounded-xl border border-overdue/30 py-3 text-sm font-medium text-overdue disabled:opacity-40"
+      >
+        {deletingContact ? "Wird gelöscht …" : "Kontakt endgültig löschen"}
+      </button>
     </div>
   );
 }
