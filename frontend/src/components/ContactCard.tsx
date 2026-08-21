@@ -47,9 +47,11 @@ export function ContactCard({
           <span className="font-display text-base font-semibold text-ink">
             {contact.firstName} {contact.lastName}
           </span>
-          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${contact.isCompleted ? "text-later bg-later/10" : badgeColor[u.key]}`}>
-            {contact.isCompleted ? "✓ Erledigt" : u.label}
-          </span>
+          {!contact.isCompleted && (
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeColor[u.key]}`}>
+              {u.label}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 text-sm text-muted">
           <span>{contact.campaign?.name ?? "Keine Kampagne"}</span>
