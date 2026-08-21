@@ -7,6 +7,7 @@ export interface Contact {
   email?: string | null;
   city?: string | null;
   notes?: string | null;
+  birthday?: string | null;
   lastContactAt?: string | null;
   nextActionAt?: string | null;
   nextActionType?: string | null;
@@ -55,6 +56,7 @@ async function request<T>(path: string, init?: RequestInit, retriesLeft = 6): Pr
 
 export const api = {
   today: () => request<Contact[]>("/contacts/today"),
+  birthdaysToday: () => request<Contact[]>("/contacts/birthdays/today"),
   nextForCall: (excludeId?: string) =>
     request<Contact | null>(`/contacts/next-for-call${excludeId ? `?exclude=${excludeId}` : ""}`),
   list: (params: Record<string, string>) =>

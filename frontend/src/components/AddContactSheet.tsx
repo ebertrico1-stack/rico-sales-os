@@ -22,6 +22,7 @@ export function AddContactSheet({
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
   const [notes, setNotes] = useState("");
+  const [birthday, setBirthday] = useState("");
   const [campaignId, setCampaignId] = useState("");
   const [statusId, setStatusId] = useState("");
   const [priorityId, setPriorityId] = useState("");
@@ -64,6 +65,7 @@ export function AddContactSheet({
           email: email.trim() || undefined,
           city: city.trim() || undefined,
           notes: notes.trim() || undefined,
+          birthday: birthday || undefined,
           campaignId: campaignId || undefined,
           statusId, priorityId,
         }),
@@ -124,6 +126,10 @@ export function AddContactSheet({
               placeholder="z. B. woher der Kontakt kommt, erste Einschätzung …"
               className="input"
             />
+          </Field>
+
+          <Field label="Geburtstag">
+            <input type="date" value={birthday} onChange={(e) => setBirthday(e.target.value)} className="input" />
           </Field>
 
           <Field label="Kampagne">

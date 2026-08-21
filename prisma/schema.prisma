@@ -47,6 +47,7 @@ model Contact {
   country     String?
   source      String?  // Quelle (Import, manuell, etc.)
   notes       String?  // freies Notizfeld, aktuellster Stand
+  birthday    DateTime? // Tag/Monat werden ausgewertet, Jahr optional mitgespeichert
 
   campaignId  String?
   campaign    Campaign? @relation(fields: [campaignId], references: [id])

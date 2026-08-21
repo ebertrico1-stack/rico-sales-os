@@ -19,12 +19,14 @@ function groupCounts(contacts: Contact[]) {
 
 export function TodayPage() {
   const [contacts, setContacts] = useState<Contact[] | null>(null);
+  const [birthdays, setBirthdays] = useState<Contact[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rescheduling, setRescheduling] = useState<Contact | null>(null);
   const navigate = useNavigate();
 
   function reload() {
     api.today().then(setContacts).catch((e) => setError(e.message));
+    api.birthdaysToday().then(setBirthdays).catch(() => {});
   }
 
   useEffect(reload, []);
@@ -39,6 +41,23 @@ export function TodayPage() {
         </p>
         <h1 className="font-display text-2xl font-bold text-ink">Heute</h1>
       </header>
+
+      {birthdays.length > 0 && (
+        <div className="mb-5 rounded-xl border border-today/30 bg-today/10 p-4">
+          <p className="mb-2 font-display text-sm font-semibold text-ink">🎂 Heute Geburtstag</p>
+          <div className="flex flex-col gap-2">
+            {birthdays.map((b) => (
+              <button
+                key={b.id}
+                onClick={() => navigate(`/kontakte/${b.id}`)}
+                className="text-left text-sm text-ink underline decoration-today/50"
+              >
+                {b.firstName} {b.lastName}{b.company ? ` — ${b.company}` : ""}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {counts && (
         <div className="mb-5 grid grid-cols-3 gap-2">

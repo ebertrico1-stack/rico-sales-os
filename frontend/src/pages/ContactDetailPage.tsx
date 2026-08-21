@@ -7,7 +7,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? "";
 interface Detail {
   id: string;
   firstName: string; lastName: string; company?: string; phone?: string; email?: string;
-  city?: string; notes?: string; campaign: { name: string } | null; status: { name: string }; priority: { name: string };
+  city?: string; notes?: string; birthday?: string | null; campaign: { name: string } | null; status: { name: string }; priority: { name: string };
   activities: { id: string; type: string; result?: string; note?: string; createdAt: string }[];
 }
 
@@ -18,6 +18,9 @@ export function ContactDetailPage() {
   const [newNote, setNewNote] = useState("");
   const [addingNote, setAddingNote] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingBirthday, setEditingBirthday] = useState(false);
+  const [birthdayInput, setBirthdayInput] = useState("");
+  const [savingBirthday, setSavingBirthday] = useState(false);
 
   function reload() {
     fetch(`${API_BASE}/api/contacts/${id}`)
@@ -59,6 +62,21 @@ export function ContactDetailPage() {
     }
   }
 
+  async function handleSaveBirthday() {
+    setSavingBirthday(true);
+    try {
+      await fetch(`${API_BASE}/api/contacts/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ birthday: birthdayInput || null }),
+      });
+      setEditingBirthday(false);
+      reload();
+    } finally {
+      setSavingBirthday(false);
+    }
+  }
+
   if (error) return <p className="p-4 text-sm text-overdue">{error}</p>;
   if (!contact) return <p className="p-4 text-sm text-muted">Lade …</p>;
 
@@ -72,6 +90,39 @@ export function ContactDetailPage() {
         {contact.phone && <p>{contact.phone}</p>}
         {contact.email && <p>{contact.email}</p>}
         {contact.city && <p>{contact.city}</p>}
+      </div>
+
+      <div className="mt-4 rounded-xl border border-border bg-surface p-4">
+        <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">🎂 Geburtstag</p>
+        {!editingBirthday ? (
+          <button
+            onClick={() => {
+              setBirthdayInput(contact.birthday ? contact.birthday.slice(0, 10) : "");
+              setEditingBirthday(true);
+            }}
+            className="text-sm text-ink"
+          >
+            {contact.birthday
+              ? new Date(contact.birthday).toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" })
+              : <span className="text-muted">Noch kein Geburtstag hinterlegt — antippen zum Hinzufügen</span>}
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              type="date"
+              value={birthdayInput}
+              onChange={(e) => setBirthdayInput(e.target.value)}
+              className="input flex-1"
+            />
+            <button
+              onClick={handleSaveBirthday}
+              disabled={savingBirthday}
+              className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+            >
+              {savingBirthday ? "…" : "Speichern"}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 rounded-xl border border-border bg-surface p-4">

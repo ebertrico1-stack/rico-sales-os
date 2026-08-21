@@ -104,6 +104,17 @@ contactsRouter.get("/", async (req, res) => {
   res.json(contacts);
 });
 
+// ---------- Geburtstage heute (Tag/Monat, Jahr wird ignoriert) ----------
+contactsRouter.get("/birthdays/today", async (_req, res) => {
+  const now = new Date();
+  const contacts = await prisma.contact.findMany({ where: { birthday: { not: null } } });
+  const todays = contacts.filter((c) => {
+    if (!c.birthday) return false;
+    return c.birthday.getUTCMonth() === now.getMonth() && c.birthday.getUTCDate() === now.getDate();
+  });
+  res.json(todays);
+});
+
 // ---------- Einzelner Kontakt inkl. voller Historie ----------
 contactsRouter.get("/:id", async (req, res) => {
   const contact = await prisma.contact.findUnique({
@@ -132,6 +143,7 @@ const createContactSchema = z.object({
   country: z.string().optional(),
   source: z.string().optional(),
   notes: z.string().optional(),
+  birthday: z.string().optional(), // ISO-Datum, z.B. "1985-06-12"
   campaignId: z.string().optional(),
   statusId: z.string(),
   priorityId: z.string(),
@@ -142,7 +154,7 @@ contactsRouter.post("/", async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: "Der Kontakt konnte nicht gespeichert werden.", details: parsed.error.flatten() });
 
   // Duplikatsprüfung (Punkt 17): Telefon zuerst, dann E-Mail
-  const { phone, email } = parsed.data;
+  const { phone, email, birthday, ...rest } = parsed.data;
   if (phone || email) {
     const possibleDuplicate = await prisma.contact.findFirst({
       where: { OR: [phone ? { phone } : undefined, email ? { email } : undefined].filter(Boolean) as any },
@@ -152,7 +164,9 @@ contactsRouter.post("/", async (req, res) => {
     }
   }
 
-  const contact = await prisma.contact.create({ data: parsed.data });
+  const contact = await prisma.contact.create({
+    data: { ...rest, phone, email, birthday: birthday ? new Date(birthday) : undefined },
+  });
   res.status(201).json(contact);
 });
 
