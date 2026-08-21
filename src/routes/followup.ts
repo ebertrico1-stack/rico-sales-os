@@ -9,6 +9,34 @@ const rescheduleSchema = z.object({
   reason: z.string().optional(), // freier Text, z.B. "Call Allgemein", "Termin für Vertragsgespräch"
 });
 
+// POST /api/contacts/:id/complete
+// Schneller Weg, einen Kontakt direkt aus der Liste als erledigt zu markieren,
+// ohne durch Call Mode zu gehen.
+followUpRouter.post("/:id/complete", async (req, res) => {
+  const contactId = req.params.id;
+  const contact = await prisma.contact.findUnique({ where: { id: contactId } });
+  if (!contact) return res.status(404).json({ error: "Kontakt nicht gefunden." });
+
+  try {
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.activity.create({
+        data: { contactId, type: "Als erledigt markiert" },
+      });
+      await tx.followUp.updateMany({
+        where: { contactId, isDone: false },
+        data: { isDone: true, resolvedAt: new Date() },
+      });
+      return tx.contact.update({
+        where: { id: contactId },
+        data: { nextActionAt: null, nextActionType: null, isCompleted: true },
+      });
+    });
+    res.json(updated);
+  } catch {
+    res.status(500).json({ error: "Der Kontakt konnte nicht als erledigt markiert werden." });
+  }
+});
+
 // POST /api/contacts/:id/reschedule
 // Für den Fall, dass Rico einen Kontakt aus der Liste heraus verschieben will,
 // ohne durch den vollen Call-Mode-Flow zu gehen (Szenario 2 + 3 aus der Spec).

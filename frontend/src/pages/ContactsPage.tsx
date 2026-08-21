@@ -80,6 +80,7 @@ export function ContactsPage() {
             contact={c}
             onClick={() => navigate(`/kontakte/${c.id}`)}
             onReschedule={() => setRescheduling(c)}
+            onComplete={() => api.complete(c.id).then(reload)}
           />
         ))}
         {contacts.length === 0 && !error && (

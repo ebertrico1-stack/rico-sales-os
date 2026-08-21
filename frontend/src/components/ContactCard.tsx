@@ -31,10 +31,12 @@ export function ContactCard({
   contact,
   onClick,
   onReschedule,
+  onComplete,
 }: {
   contact: Contact;
   onClick?: () => void;
   onReschedule?: () => void;
+  onComplete?: () => void;
 }) {
   const u = urgency(contact);
   return (
@@ -58,14 +60,27 @@ export function ContactCard({
           {contact.phone && <span>{contact.phone}</span>}
         </div>
       </button>
-      {onReschedule && !contact.isCompleted && (
-        <button
-          onClick={onReschedule}
-          aria-label="Follow-up verschieben"
-          className="shrink-0 border-l border-border px-3 text-lg text-muted active:bg-base"
-        >
-          ⋯
-        </button>
+      {!contact.isCompleted && (onComplete || onReschedule) && (
+        <div className="flex shrink-0 divide-x divide-border border-l border-border">
+          {onComplete && (
+            <button
+              onClick={onComplete}
+              aria-label="Als erledigt markieren"
+              className="px-3 text-lg text-later active:bg-base"
+            >
+              ✓
+            </button>
+          )}
+          {onReschedule && (
+            <button
+              onClick={onReschedule}
+              aria-label="Follow-up verschieben"
+              className="px-3 text-lg text-muted active:bg-base"
+            >
+              ⋯
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
