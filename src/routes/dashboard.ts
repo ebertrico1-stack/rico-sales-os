@@ -23,7 +23,16 @@ dashboardRouter.get("/", async (_req, res) => {
     prisma.activity.count({ where: { type: "Anruf", createdAt: { gte: startOfDay, lte: endOfDay } } }),
     prisma.activity.count({ where: { type: "Anruf", result: { in: ["interesse", "termin_vereinbart", "rueckruf", "kein_interesse"] }, createdAt: { gte: startOfDay, lte: endOfDay } } }),
     prisma.activity.count({ where: { type: "Anruf", result: "nicht_erreicht", createdAt: { gte: startOfDay, lte: endOfDay } } }),
-    prisma.followUp.count({ where: { isDone: false, reason: "rueckruf" } }),
+    prisma.followUp.count({
+      where: {
+        isDone: false,
+        OR: [
+          { reason: { equals: "rueckruf" } }, // aus Call Mode (fester Wert)
+          { reason: { contains: "rückruf", mode: "insensitive" } }, // aus freiem Text beim Verschieben
+          { reason: { contains: "rueckruf", mode: "insensitive" } },
+        ],
+      },
+    }),
     prisma.appointment.count({ where: { scheduledAt: { gte: now }, status: "geplant" } }),
     prisma.contact.count({ where: { isCompleted: true } }),
   ]);
