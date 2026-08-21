@@ -117,12 +117,6 @@ export function ContactDetailPage() {
       <h1 className="font-display text-2xl font-bold text-ink">{contact.firstName} {contact.lastName}</h1>
       <p className="mt-1 text-sm text-muted">{contact.campaign?.name ?? "Keine Kampagne"} · {contact.status.name} · {contact.priority.name}</p>
 
-      {contact.isCompleted && (
-        <div className="mt-3 rounded-xl border border-later/30 bg-later/10 p-3">
-          <span className="text-sm text-ink">✓ Abgeschlossen</span>
-        </div>
-      )}
-
       <div className="mt-4 space-y-1 rounded-xl border border-border bg-surface p-4 font-mono text-sm">
         {contact.company && <p>{contact.company}</p>}
         {contact.phone && <p>{contact.phone}</p>}
