@@ -125,3 +125,36 @@ test("DELETE /contacts/:id entfernt Kontakt samt Verlauf", async () => {
   const stillThere = await prisma.contact.findUnique({ where: { id: contact.id } });
   assert.equal(stillThere, null);
 });
+
+// ---------- Tage-seit-Kontakt: mark-contacted + Sortierung/Filter ----------
+test("mark-contacted setzt lastContactAt, Notiz/Verschieben rühren es nicht an", async () => {
+  const contact = await createContact();
+
+  const before = await prisma.contact.findUnique({ where: { id: contact.id } });
+  assert.equal(before?.lastContactAt, null);
+
+  await request(app).post(`/api/contacts/${contact.id}/mark-contacted`);
+  const afterMark = await prisma.contact.findUnique({ where: { id: contact.id } });
+  assert.ok(afterMark?.lastContactAt);
+
+  // Verschieben darf lastContactAt nicht verändern
+  const original = afterMark!.lastContactAt!.getTime();
+  const tomorrow = new Date(Date.now() + 86400000);
+  await request(app).post(`/api/contacts/${contact.id}/reschedule`).send({ dueAt: tomorrow.toISOString() });
+  const afterReschedule = await prisma.contact.findUnique({ where: { id: contact.id } });
+  assert.equal(afterReschedule?.lastContactAt?.getTime(), original);
+});
+
+test("noContactDays-Filter findet Kontakte ohne kürzlichen Kontakt", async () => {
+  const oldContact = await createContact();
+  const oldDate = new Date(Date.now() - 40 * 86400000);
+  await prisma.contact.update({ where: { id: oldContact.id }, data: { lastContactAt: oldDate } });
+
+  const recentContact = await createContact();
+  await request(app).post(`/api/contacts/${recentContact.id}/mark-contacted`);
+
+  const res = await request(app).get("/api/contacts?noContactDays=30");
+  const ids = res.body.map((c: any) => c.id);
+  assert.ok(ids.includes(oldContact.id));
+  assert.ok(!ids.includes(recentContact.id));
+});

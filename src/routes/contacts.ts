@@ -36,12 +36,14 @@ const listQuerySchema = z.object({
   campaignId: z.string().optional(),
   statusId: z.string().optional(),
   search: z.string().optional(),
+  sort: z.enum(["neueste", "laengster_kein_kontakt"]).optional(),
+  noContactDays: z.enum(["30", "90", "180"]).optional(),
 });
 
 contactsRouter.get("/", async (req, res) => {
   const parsed = listQuerySchema.safeParse(req.query);
   if (!parsed.success) return res.status(400).json({ error: "Ungültige Filterparameter" });
-  const { filter, campaignId, statusId, search } = parsed.data;
+  const { filter, campaignId, statusId, search, sort, noContactDays } = parsed.data;
 
   const now = new Date();
   const where: any = {};
@@ -64,20 +66,39 @@ contactsRouter.get("/", async (req, res) => {
   if (campaignId) where.campaignId = campaignId;
   if (statusId) where.statusId = statusId;
 
+  if (noContactDays) {
+    const cutoff = new Date(now);
+    cutoff.setDate(cutoff.getDate() - Number(noContactDays));
+    // "kein Kontakt seit X Tagen" = nie kontaktiert ODER letzter Kontakt vor dem Cutoff
+    where.OR = [{ lastContactAt: null }, { lastContactAt: { lte: cutoff } }];
+  }
+
   if (search) {
-    where.OR = [
+    const searchOr = [
       { firstName: { contains: search } },
       { lastName: { contains: search } },
       { company: { contains: search } },
       { phone: { contains: search } },
       { email: { contains: search } },
     ];
+    // noContactDays nutzt where.OR bereits für sein eigenes Kriterium → beide Bedingungen mit AND kombinieren
+    if (where.OR) {
+      where.AND = [{ OR: where.OR }, { OR: searchOr }];
+      delete where.OR;
+    } else {
+      where.OR = searchOr;
+    }
   }
+
+  const orderBy =
+    sort === "laengster_kein_kontakt"
+      ? [{ lastContactAt: { sort: "asc" as const, nulls: "first" as const } }]
+      : { updatedAt: "desc" as const };
 
   const contacts = await prisma.contact.findMany({
     where,
     include: { campaign: true, status: true, priority: true },
-    orderBy: { updatedAt: "desc" },
+    orderBy,
   });
 
   res.json(contacts);

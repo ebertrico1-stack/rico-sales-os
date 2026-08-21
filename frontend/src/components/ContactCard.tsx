@@ -27,16 +27,26 @@ function formatTime(iso?: string | null) {
   return new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 }
 
+function daysSince(iso?: string | null): string {
+  if (!iso) return "Noch nie kontaktiert";
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (days === 0) return "Heute kontaktiert";
+  if (days === 1) return "Vor 1 Tag kontaktiert";
+  return `Vor ${days} Tagen kontaktiert`;
+}
+
 export function ContactCard({
   contact,
   onClick,
   onReschedule,
   onComplete,
+  onMarkContacted,
 }: {
   contact: Contact;
   onClick?: () => void;
   onReschedule?: () => void;
   onComplete?: () => void;
+  onMarkContacted?: () => void;
 }) {
   const u = urgency(contact);
   return (
@@ -61,9 +71,19 @@ export function ContactCard({
           {contact.nextActionAt && <span>Follow-up: {formatTime(contact.nextActionAt)} Uhr</span>}
           {contact.phone && <span>{contact.phone}</span>}
         </div>
+        <div className="font-mono text-xs text-muted">{daysSince(contact.lastContactAt)}</div>
       </button>
-      {(onComplete || onReschedule) && (
+      {(onComplete || onReschedule || onMarkContacted) && (
         <div className="flex shrink-0 divide-x divide-border border-l border-border">
+          {onMarkContacted && (
+            <button
+              onClick={onMarkContacted}
+              aria-label="Als kontaktiert markieren"
+              className="px-3 text-lg active:bg-base"
+            >
+              📞
+            </button>
+          )}
           {onComplete && !contact.isCompleted && (
             <button
               onClick={onComplete}

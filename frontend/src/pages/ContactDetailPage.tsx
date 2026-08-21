@@ -7,7 +7,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? "";
 interface Detail {
   id: string;
   firstName: string; lastName: string; company?: string; phone?: string; email?: string;
-  city?: string; notes?: string; birthday?: string | null; isCompleted: boolean;
+  city?: string; notes?: string; birthday?: string | null; isCompleted: boolean; lastContactAt?: string | null;
   campaign: { name: string } | null; status: { name: string }; priority: { name: string };
   activities: { id: string; type: string; result?: string; note?: string; createdAt: string }[];
 }
@@ -25,6 +25,7 @@ export function ContactDetailPage() {
   const [savingBirthday, setSavingBirthday] = useState(false);
   const [birthdayError, setBirthdayError] = useState<string | null>(null);
   const [deletingContact, setDeletingContact] = useState(false);
+  const [markingContacted, setMarkingContacted] = useState(false);
 
   function reload() {
     fetch(`${API_BASE}/api/contacts/${id}`)
@@ -109,6 +110,25 @@ export function ContactDetailPage() {
     }
   }
 
+  async function handleMarkContacted() {
+    if (!contact) return;
+    setMarkingContacted(true);
+    try {
+      await api.markContacted(contact.id);
+      reload();
+    } finally {
+      setMarkingContacted(false);
+    }
+  }
+
+  function daysSinceContact(): string {
+    if (!contact?.lastContactAt) return "Noch nie kontaktiert";
+    const days = Math.floor((Date.now() - new Date(contact.lastContactAt).getTime()) / 86400000);
+    if (days === 0) return "Heute kontaktiert";
+    if (days === 1) return "Vor 1 Tag kontaktiert";
+    return `Vor ${days} Tagen kontaktiert`;
+  }
+
   if (error) return <p className="p-4 text-sm text-overdue">{error}</p>;
   if (!contact) return <p className="p-4 text-sm text-muted">Lade …</p>;
 
@@ -116,6 +136,17 @@ export function ContactDetailPage() {
     <div className="mx-auto max-w-lg px-4 pb-safe-nav pt-6">
       <h1 className="font-display text-2xl font-bold text-ink">{contact.firstName} {contact.lastName}</h1>
       <p className="mt-1 text-sm text-muted">{contact.campaign?.name ?? "Keine Kampagne"} · {contact.status.name} · {contact.priority.name}</p>
+
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4">
+        <span className="text-sm text-ink">{daysSinceContact()}</span>
+        <button
+          onClick={handleMarkContacted}
+          disabled={markingContacted}
+          className="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+        >
+          {markingContacted ? "…" : "📞 Jetzt kontaktiert"}
+        </button>
+      </div>
 
       <div className="mt-4 space-y-1 rounded-xl border border-border bg-surface p-4 font-mono text-sm">
         {contact.company && <p>{contact.company}</p>}

@@ -9,6 +9,24 @@ const rescheduleSchema = z.object({
   reason: z.string().optional(), // freier Text, z.B. "Call Allgemein", "Termin für Vertragsgespräch"
 });
 
+// POST /api/contacts/:id/mark-contacted
+// Setzt lastContactAt auf jetzt — unabhängig von Erledigt/Verschieben/Notizen.
+followUpRouter.post("/:id/mark-contacted", async (req, res) => {
+  const contactId = req.params.id;
+  const contact = await prisma.contact.findUnique({ where: { id: contactId } });
+  if (!contact) return res.status(404).json({ error: "Kontakt nicht gefunden." });
+
+  try {
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.activity.create({ data: { contactId, type: "Kontaktiert" } });
+      return tx.contact.update({ where: { id: contactId }, data: { lastContactAt: new Date() } });
+    });
+    res.json(updated);
+  } catch {
+    res.status(500).json({ error: "Konnte nicht als kontaktiert markiert werden." });
+  }
+});
+
 // POST /api/contacts/:id/complete
 // Schneller Weg, einen Kontakt direkt aus der Liste als erledigt zu markieren,
 // ohne durch Call Mode zu gehen.

@@ -90,6 +90,7 @@ export function TodayPage() {
             onClick={() => navigate(`/kontakte/${c.id}`)}
             onReschedule={() => setRescheduling(c)}
             onComplete={() => api.complete(c.id).then(reload)}
+            onMarkContacted={() => api.markContacted(c.id).then(reload)}
           />
         ))}
       </div>

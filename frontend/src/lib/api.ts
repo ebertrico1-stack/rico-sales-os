@@ -71,13 +71,10 @@ export const api = {
   statuses: () => request<{ id: string; name: string }[]>("/statuses"),
   priorities: () => request<{ id: string; name: string }[]>("/priorities"),
   complete: (id: string) => request<Contact>(`/contacts/${id}/complete`, { method: "POST" }),
+  markContacted: (id: string) => request<Contact>(`/contacts/${id}/mark-contacted`, { method: "POST" }),
   reschedule: (id: string, payload: { dueAt: string; reason?: string }) =>
     request<Contact>(`/contacts/${id}/reschedule`, { method: "POST", body: JSON.stringify(payload) }),
   deleteContact: (id: string) => request<void>(`/contacts/${id}`, { method: "DELETE" }),
   deleteActivity: (contactId: string, activityId: string) =>
     request<void>(`/contacts/${contactId}/activities/${activityId}`, { method: "DELETE" }),
-  logCall: (
-    id: string,
-    payload: { result: string; note?: string; dueAt?: string; appointment?: { scheduledAt: string; location?: string } }
-  ) => request<Contact>(`/contacts/${id}/log-call`, { method: "POST", body: JSON.stringify(payload) }),
 };
