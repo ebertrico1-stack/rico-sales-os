@@ -73,7 +73,7 @@ followUpRouter.post("/:id/reschedule", async (req, res) => {
       });
       return tx.contact.update({
         where: { id: contactId },
-        data: { nextActionAt: nextDate },
+        data: { nextActionAt: nextDate, isCompleted: false },
       });
     });
     res.json(updated);

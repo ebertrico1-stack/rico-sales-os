@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../lib/api";
+import { RescheduleSheet } from "../components/RescheduleSheet";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 interface Detail {
   id: string;
   firstName: string; lastName: string; company?: string; phone?: string; email?: string;
-  city?: string; notes?: string; birthday?: string | null; campaign: { name: string } | null; status: { name: string }; priority: { name: string };
+  city?: string; notes?: string; birthday?: string | null; isCompleted: boolean;
+  campaign: { name: string } | null; status: { name: string }; priority: { name: string };
   activities: { id: string; type: string; result?: string; note?: string; createdAt: string }[];
 }
 
@@ -22,6 +24,7 @@ export function ContactDetailPage() {
   const [birthdayInput, setBirthdayInput] = useState("");
   const [savingBirthday, setSavingBirthday] = useState(false);
   const [birthdayError, setBirthdayError] = useState<string | null>(null);
+  const [reactivating, setReactivating] = useState(false);
 
   function reload() {
     fetch(`${API_BASE}/api/contacts/${id}`)
@@ -98,6 +101,18 @@ export function ContactDetailPage() {
     <div className="mx-auto max-w-lg px-4 pb-safe-nav pt-6">
       <h1 className="font-display text-2xl font-bold text-ink">{contact.firstName} {contact.lastName}</h1>
       <p className="mt-1 text-sm text-muted">{contact.campaign?.name ?? "Keine Kampagne"} · {contact.status.name} · {contact.priority.name}</p>
+
+      {contact.isCompleted && (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-later/30 bg-later/10 p-3">
+          <span className="text-sm text-ink">✓ Abgeschlossen</span>
+          <button
+            onClick={() => setReactivating(true)}
+            className="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-sm font-semibold text-white"
+          >
+            Wieder aktivieren
+          </button>
+        </div>
+      )}
 
       <div className="mt-4 space-y-1 rounded-xl border border-border bg-surface p-4 font-mono text-sm">
         {contact.company && <p>{contact.company}</p>}
@@ -199,6 +214,18 @@ export function ContactDetailPage() {
           <p className="text-sm text-muted">Noch keine Aktivitäten erfasst.</p>
         )}
       </div>
+
+      {reactivating && (
+        <RescheduleSheet
+          contactId={contact.id}
+          contactName={`${contact.firstName} ${contact.lastName}`}
+          onClose={() => setReactivating(false)}
+          onDone={() => {
+            setReactivating(false);
+            reload();
+          }}
+        />
+      )}
     </div>
   );
 }
