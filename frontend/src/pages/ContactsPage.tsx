@@ -11,7 +11,6 @@ const filters = [
   { key: "heute", label: "Heute" },
   { key: "morgen", label: "Morgen" },
   { key: "diese_woche", label: "Diese Woche" },
-  { key: "abgeschlossen", label: "Abgeschlossen" },
 ];
 
 export function ContactsPage() {

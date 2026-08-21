@@ -50,7 +50,7 @@ contactsRouter.get("/next-for-call", async (req, res) => {
 
 // ---------- Liste mit Filtern + Suche (Punkt 12) ----------
 const listQuerySchema = z.object({
-  filter: z.enum(["alle", "heute", "ueberfaellig", "morgen", "diese_woche", "abgeschlossen"]).optional(),
+  filter: z.enum(["alle", "heute", "ueberfaellig", "morgen", "diese_woche"]).optional(),
   campaignId: z.string().optional(),
   statusId: z.string().optional(),
   search: z.string().optional(),
@@ -63,9 +63,6 @@ contactsRouter.get("/", async (req, res) => {
 
   const now = new Date();
   const where: any = {};
-
-  if (filter === "abgeschlossen") where.isCompleted = true;
-  else where.isCompleted = false;
 
   if (filter === "ueberfaellig") where.nextActionAt = { lt: now };
   if (filter === "heute") {
