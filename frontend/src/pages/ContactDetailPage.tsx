@@ -21,6 +21,7 @@ export function ContactDetailPage() {
   const [editingBirthday, setEditingBirthday] = useState(false);
   const [birthdayInput, setBirthdayInput] = useState("");
   const [savingBirthday, setSavingBirthday] = useState(false);
+  const [birthdayError, setBirthdayError] = useState<string | null>(null);
 
   function reload() {
     fetch(`${API_BASE}/api/contacts/${id}`)
@@ -39,13 +40,19 @@ export function ContactDetailPage() {
       ? `${contact.notes}\n[${timestamp}] ${newNote.trim()}`
       : `[${timestamp}] ${newNote.trim()}`;
     try {
-      await fetch(`${API_BASE}/api/contacts/${id}`, {
+      const res = await fetch(`${API_BASE}/api/contacts/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notes: combined }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Die Notiz konnte nicht gespeichert werden.");
+      }
       setNewNote("");
       reload();
+    } catch (e: any) {
+      setError(e.message ?? "Die Notiz konnte nicht gespeichert werden.");
     } finally {
       setAddingNote(false);
     }
@@ -64,14 +71,21 @@ export function ContactDetailPage() {
 
   async function handleSaveBirthday() {
     setSavingBirthday(true);
+    setBirthdayError(null);
     try {
-      await fetch(`${API_BASE}/api/contacts/${id}`, {
+      const res = await fetch(`${API_BASE}/api/contacts/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ birthday: birthdayInput || null }),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Der Geburtstag konnte nicht gespeichert werden.");
+      }
       setEditingBirthday(false);
       reload();
+    } catch (e: any) {
+      setBirthdayError(e.message ?? "Der Geburtstag konnte nicht gespeichert werden.");
     } finally {
       setSavingBirthday(false);
     }
@@ -107,20 +121,23 @@ export function ContactDetailPage() {
               : <span className="text-muted">Noch kein Geburtstag hinterlegt — antippen zum Hinzufügen</span>}
           </button>
         ) : (
-          <div className="flex gap-2">
-            <input
-              type="date"
-              value={birthdayInput}
-              onChange={(e) => setBirthdayInput(e.target.value)}
-              className="input flex-1"
-            />
-            <button
-              onClick={handleSaveBirthday}
-              disabled={savingBirthday}
-              className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-            >
-              {savingBirthday ? "…" : "Speichern"}
-            </button>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={birthdayInput}
+                onChange={(e) => setBirthdayInput(e.target.value)}
+                className="input flex-1"
+              />
+              <button
+                onClick={handleSaveBirthday}
+                disabled={savingBirthday}
+                className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+              >
+                {savingBirthday ? "…" : "Speichern"}
+              </button>
+            </div>
+            {birthdayError && <p className="text-sm text-overdue">{birthdayError}</p>}
           </div>
         )}
       </div>

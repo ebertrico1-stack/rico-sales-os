@@ -183,12 +183,19 @@ contactsRouter.delete("/:contactId/activities/:activityId", async (req, res) => 
 // ---------- Kontakt aktualisieren ----------
 contactsRouter.patch("/:id", async (req, res) => {
   try {
+    const { birthday, ...rest } = req.body;
+    const data =
+      birthday !== undefined
+        ? { ...rest, birthday: birthday ? new Date(birthday) : null }
+        : rest;
+
     const contact = await prisma.contact.update({
       where: { id: req.params.id },
-      data: req.body,
+      data,
     });
     res.json(contact);
-  } catch {
-    res.status(404).json({ error: "Der Kontakt konnte nicht gespeichert werden." });
+  } catch (err) {
+    console.error(err); // technische Details nur im Server-Log
+    res.status(400).json({ error: "Der Kontakt konnte nicht gespeichert werden." });
   }
 });
