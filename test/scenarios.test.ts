@@ -1,6 +1,5 @@
-// Integrationstests gegen eine echte (temporäre) SQLite-DB.
-// Setup: DATABASE_URL zeigt per .env.test auf eine Wegwerf-Datenbank.
-// Ausführen: npm run test:integration (siehe README — braucht `prisma generate` + `prisma migrate deploy` zuvor)
+// Integrationstests gegen eine echte (temporäre) Postgres-DB.
+// Ausführen: npm run test:integration (siehe README — braucht `prisma generate` + eine erreichbare Test-DB zuvor)
 
 import { test, before, beforeEach, after } from "node:test";
 import assert from "node:assert/strict";
@@ -10,7 +9,6 @@ import { prisma } from "../src/lib/prisma.js";
 
 let campaignId: string;
 let statusNeu: string;
-let statusAbgeschlossen: string;
 let priorityNormal: string;
 
 before(async () => {
@@ -20,11 +18,7 @@ before(async () => {
   campaignId = campaign.id;
 
   const neu = await prisma.status.upsert({ where: { name: "Neu" }, update: {}, create: { name: "Neu", sortOrder: 0 } });
-  const abgeschlossen = await prisma.status.upsert({
-    where: { name: "Abgeschlossen" }, update: {}, create: { name: "Abgeschlossen", sortOrder: 9 },
-  });
   statusNeu = neu.id;
-  statusAbgeschlossen = abgeschlossen.id;
 
   const normal = await prisma.priority.upsert({ where: { name: "Normal" }, update: {}, create: { name: "Normal", weight: 2 } });
   priorityNormal = normal.id;
@@ -34,7 +28,6 @@ beforeEach(async () => {
   // saubere Kontakt-/Activity-/FollowUp-Tabellen vor jedem Test
   await prisma.activity.deleteMany();
   await prisma.followUp.deleteMany();
-  await prisma.appointment.deleteMany();
   await prisma.contact.deleteMany();
 });
 
@@ -83,38 +76,10 @@ test("Szenario 3: Kontakt mit Termin in einer Woche taucht nicht in Heute auf", 
   assert.equal(today.body.length, 0);
 });
 
-// ---------- Szenario 4: Kontakt nicht erreicht → Activity wird gespeichert ----------
-test("Szenario 4: nicht erreicht wird als Activity geloggt", async () => {
+// ---------- Szenario 6: Kontakt als erledigt markiert → nicht mehr in offenen Follow-ups ----------
+test("Szenario 6: /complete schließt Kontakt ab", async () => {
   const contact = await createContact();
-  const tomorrow = new Date(Date.now() + 86400000);
-  await request(app)
-    .post(`/api/contacts/${contact.id}/log-call`)
-    .send({ result: "nicht_erreicht", dueAt: tomorrow.toISOString() });
-
-  const activities = await prisma.activity.findMany({ where: { contactId: contact.id } });
-  assert.equal(activities.length, 1);
-  assert.equal(activities[0].result, "nicht_erreicht");
-});
-
-// ---------- Szenario 5: Kontakt bekommt Termin → Termin wird gespeichert ----------
-test("Szenario 5: Termin vereinbart legt Appointment an", async () => {
-  const contact = await createContact();
-  const scheduledAt = new Date(Date.now() + 3 * 86400000).toISOString();
-  await request(app).post(`/api/contacts/${contact.id}/log-call`).send({
-    result: "termin_vereinbart",
-    appointment: { scheduledAt },
-  });
-
-  const appointments = await prisma.appointment.findMany({ where: { contactId: contact.id } });
-  assert.equal(appointments.length, 1);
-});
-
-// ---------- Szenario 6: Kontakt abgeschlossen → nicht mehr in offenen Follow-ups ----------
-test("Szenario 6: keine_weitere_aktion schließt Kontakt ab", async () => {
-  const contact = await createContact();
-  await request(app)
-    .post(`/api/contacts/${contact.id}/log-call`)
-    .send({ result: "kein_interesse" });
+  await request(app).post(`/api/contacts/${contact.id}/complete`);
 
   const updated = await prisma.contact.findUnique({ where: { id: contact.id } });
   assert.equal(updated?.isCompleted, true);
@@ -147,4 +112,16 @@ test("Szenario 8: Import erkennt Duplikat per Telefonnummer", async () => {
 
   assert.equal(res.body.created, 0);
   assert.equal(res.body.skippedDuplicates.length, 1);
+});
+
+// ---------- Kontakt endgültig löschen ----------
+test("DELETE /contacts/:id entfernt Kontakt samt Verlauf", async () => {
+  const contact = await createContact();
+  await request(app).post(`/api/contacts/${contact.id}/complete`); // erzeugt einen Activity-Eintrag
+
+  const res = await request(app).delete(`/api/contacts/${contact.id}`);
+  assert.equal(res.status, 204);
+
+  const stillThere = await prisma.contact.findUnique({ where: { id: contact.id } });
+  assert.equal(stillThere, null);
 });

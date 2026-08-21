@@ -39,7 +39,6 @@ export function AddContactSheet({
       setCampaigns(c);
       setStatuses(s);
       setPriorities(p);
-      if (c[0]) setCampaignId(c[0].id);
       const neu = s.find((x) => x.name === "Neu") ?? s[0];
       if (neu) setStatusId(neu.id);
       const normal = p.find((x) => x.name === "Normal") ?? p[0];

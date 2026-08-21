@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../lib/api";
-import { RescheduleSheet } from "../components/RescheduleSheet";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
@@ -25,7 +24,6 @@ export function ContactDetailPage() {
   const [birthdayInput, setBirthdayInput] = useState("");
   const [savingBirthday, setSavingBirthday] = useState(false);
   const [birthdayError, setBirthdayError] = useState<string | null>(null);
-  const [reactivating, setReactivating] = useState(false);
   const [deletingContact, setDeletingContact] = useState(false);
 
   function reload() {
@@ -120,14 +118,8 @@ export function ContactDetailPage() {
       <p className="mt-1 text-sm text-muted">{contact.campaign?.name ?? "Keine Kampagne"} · {contact.status.name} · {contact.priority.name}</p>
 
       {contact.isCompleted && (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-later/30 bg-later/10 p-3">
+        <div className="mt-3 rounded-xl border border-later/30 bg-later/10 p-3">
           <span className="text-sm text-ink">✓ Abgeschlossen</span>
-          <button
-            onClick={() => setReactivating(true)}
-            className="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-sm font-semibold text-white"
-          >
-            Wieder aktivieren
-          </button>
         </div>
       )}
 
@@ -231,18 +223,6 @@ export function ContactDetailPage() {
           <p className="text-sm text-muted">Noch keine Aktivitäten erfasst.</p>
         )}
       </div>
-
-      {reactivating && (
-        <RescheduleSheet
-          contactId={contact.id}
-          contactName={`${contact.firstName} ${contact.lastName}`}
-          onClose={() => setReactivating(false)}
-          onDone={() => {
-            setReactivating(false);
-            reload();
-          }}
-        />
-      )}
 
       <button
         onClick={handleDeleteContact}

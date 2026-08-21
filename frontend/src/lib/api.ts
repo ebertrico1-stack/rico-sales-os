@@ -19,14 +19,6 @@ export interface Contact {
 
 export interface DashboardStats {
   totalContacts: number;
-  newContacts: number;
-  callsToday: number;
-  reachedToday: number;
-  notReachedToday: number;
-  callbacksOpen: number;
-  appointmentsUpcoming: number;
-  completedContacts: number;
-  conversionRate: number;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
@@ -57,15 +49,8 @@ async function request<T>(path: string, init?: RequestInit, retriesLeft = 6): Pr
 export const api = {
   today: () => request<Contact[]>("/contacts/today"),
   birthdaysToday: () => request<Contact[]>("/contacts/birthdays/today"),
-  nextForCall: (excludeId?: string) =>
-    request<Contact | null>(`/contacts/next-for-call${excludeId ? `?exclude=${excludeId}` : ""}`),
   list: (params: Record<string, string>) =>
     request<Contact[]>(`/contacts?${new URLSearchParams(params).toString()}`),
-  dashboard: () => request<DashboardStats>("/dashboard"),
-  upcomingAppointments: () =>
-    request<{ id: string; scheduledAt: string; location?: string; contact: { firstName: string; lastName: string; phone?: string; company?: string } }[]>(
-      "/appointments/upcoming"
-    ),
   previewImport: (csv: string) =>
     request<{ columns: string[]; sampleRows: Record<string, string>[]; totalRows: number; targetFields: string[] }>(
       "/import/preview",

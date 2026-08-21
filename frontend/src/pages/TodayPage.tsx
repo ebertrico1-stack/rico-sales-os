@@ -67,15 +67,6 @@ export function TodayPage() {
         </div>
       )}
 
-      {contacts && contacts.length > 0 && (
-        <button
-          onClick={() => navigate("/call-mode")}
-          className="mb-5 w-full rounded-xl bg-brand py-4 font-display text-base font-semibold text-white shadow-sm active:scale-[0.99] transition-transform"
-        >
-          Call Mode starten · {contacts.length} Kontakte
-        </button>
-      )}
-
       {error && (
         <p className="rounded-lg bg-overdue/10 px-4 py-3 text-sm text-overdue">{error}</p>
       )}

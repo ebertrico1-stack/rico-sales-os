@@ -58,7 +58,7 @@ followUpRouter.post("/:id/reschedule", async (req, res) => {
     const formattedDate = nextDate.toLocaleString("de-DE", {
       day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
     });
-    const note = reason ? `Termin am ${formattedDate} Uhr — ${reason}` : `Termin am ${formattedDate} Uhr`;
+    const note = reason ? `Nächster Kontakt am ${formattedDate} Uhr — ${reason}` : `Nächster Kontakt am ${formattedDate} Uhr`;
 
     const updated = await prisma.$transaction(async (tx) => {
       await tx.activity.create({

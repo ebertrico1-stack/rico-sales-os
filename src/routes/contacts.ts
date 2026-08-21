@@ -30,24 +30,6 @@ contactsRouter.get("/today", async (req, res) => {
   res.json(sorted);
 });
 
-// ---------- Nächster Kontakt für Call Mode (Punkt 4) ----------
-contactsRouter.get("/next-for-call", async (req, res) => {
-  const excludeId = typeof req.query.exclude === "string" ? req.query.exclude : undefined;
-  const now = new Date();
-
-  const next = await prisma.contact.findFirst({
-    where: {
-      isCompleted: false,
-      nextActionAt: { not: null, lte: now },
-      ...(excludeId ? { id: { not: excludeId } } : {}),
-    },
-    include: { campaign: true, status: true, priority: true, activities: { orderBy: { createdAt: "desc" }, take: 5 } },
-    orderBy: [{ priority: { weight: "desc" } }, { nextActionAt: "asc" }],
-  });
-
-  res.json(next);
-});
-
 // ---------- Liste mit Filtern + Suche (Punkt 12) ----------
 const listQuerySchema = z.object({
   filter: z.enum(["alle", "heute", "ueberfaellig", "morgen", "diese_woche"]).optional(),
