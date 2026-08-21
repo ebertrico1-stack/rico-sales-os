@@ -60,9 +60,9 @@ export function ContactCard({
           {contact.phone && <span>{contact.phone}</span>}
         </div>
       </button>
-      {!contact.isCompleted && (onComplete || onReschedule) && (
+      {(onComplete || onReschedule) && (
         <div className="flex shrink-0 divide-x divide-border border-l border-border">
-          {onComplete && (
+          {onComplete && !contact.isCompleted && (
             <button
               onClick={onComplete}
               aria-label="Als erledigt markieren"
@@ -74,7 +74,7 @@ export function ContactCard({
           {onReschedule && (
             <button
               onClick={onReschedule}
-              aria-label="Follow-up verschieben"
+              aria-label={contact.isCompleted ? "Wieder aktivieren" : "Follow-up verschieben"}
               className="px-3 text-lg text-muted active:bg-base"
             >
               ⋯
