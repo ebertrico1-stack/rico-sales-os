@@ -1,7 +1,7 @@
 import { Contact } from "../lib/api";
 
-function urgency(contact: Contact): { key: "overdue" | "today" | "later"; label: string } {
-  if (!contact.nextActionAt) return { key: "later", label: "Ohne Termin" };
+function urgency(contact: Contact): { key: "overdue" | "today" | "later" | "none"; label: string } {
+  if (!contact.nextActionAt) return { key: "none", label: "" };
   const due = new Date(contact.nextActionAt);
   const now = new Date();
   if (due < now) return { key: "overdue", label: "Überfällig" };
@@ -14,6 +14,7 @@ const railColor: Record<string, string> = {
   overdue: "bg-overdue",
   today: "bg-today",
   later: "bg-later",
+  none: "bg-border",
 };
 
 const badgeColor: Record<string, string> = {
@@ -57,7 +58,7 @@ export function ContactCard({
           <span className="font-display text-base font-semibold text-ink">
             {contact.firstName} {contact.lastName}
           </span>
-          {!contact.isCompleted && (
+          {!contact.isCompleted && u.key !== "none" && (
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badgeColor[u.key]}`}>
               {u.label}
             </span>
@@ -84,7 +85,7 @@ export function ContactCard({
               📞
             </button>
           )}
-          {onComplete && !contact.isCompleted && (
+          {onComplete && !contact.isCompleted && contact.nextActionAt && (
             <button
               onClick={onComplete}
               aria-label="Als erledigt markieren"
